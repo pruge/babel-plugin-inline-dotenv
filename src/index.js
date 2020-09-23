@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var pathResolve = require('path').resolve;
+const dotenv = require('dotenv');
 
 var dotenvContent;
 
@@ -18,9 +19,15 @@ function loadDotenvContent (opts){
     if (opts.debug != null) {
       debug = true
     }
-    var fileContent;
-    try { fileContent = fs.readFileSync(dotenvPath, {encoding:encoding}) } catch(e) {};
-    dotenvContent = fileContent ? require('dotenv').parse(fileContent, {debug:debug}) : {};
+    var envFileContent, modeFileContent;
+    const babelMode = process.env.BABEL_ENV || process.env.NODE_ENV || 'development';
+    try {
+        envFileContent = fs.readFileSync(dotenvPath, { encoding: encoding });
+        modeFileContent = fs.readFileSync(dotenvPath + '.' + babelMode, {encoding: encoding });
+    } catch (e) {}
+    const env = envFileContent ? dotenv.parse(envFileContent, { debug: debug }) : {};
+    const envMode = modeFileContent ? dotenv.parse(modeFileContent, { debug: debug }) : {};
+    dotenvContent = { ...env, ...envMode };
     var dotenvExpand;
     try { dotenvExpand = require('dotenv-expand'); } catch(e) {}
     if (dotenvExpand)
